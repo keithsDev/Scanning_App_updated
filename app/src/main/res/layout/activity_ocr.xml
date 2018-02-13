@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.kkenneally.testingcrop.ocrActivity">
+
+
+    <!--<TextView
+        android:id="@+id/id_text_view"
+        android:layout_width="fill_parent"
+        android:layout_height="300dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:text="Code Found:" />-->
+
+
+
+    <!--<ImageView
+        android:layout_width="250dp"
+        android:layout_height="325dp"
+        android:id="@+id/imageViewOcr"
+        android:layout_centerHorizontal="true"
+        />-->
+
+    <EditText
+        android:id="@+id/edit_text_id"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/edit_error_code"
+        android:layout_below="@id/error_below"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="10dp"
+        android:ems="10"
+        android:inputType="none"
+        android:text="..." />
+
+    <Button
+        android:id="@+id/edit_error_code"
+        android:layout_width="fill_parent"
+        android:layout_height="51dp"
+        android:layout_above="@+id/btn_send_to_server"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="6dp"
+        android:layout_marginTop="6dp"
+        android:background="@color/colorPrimary"
+        android:text="@string/edit"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="124dp"
+        tools:layout_editor_absoluteY="325dp" />
+
+    <Button
+        android:id="@+id/btn_send_to_server"
+        android:layout_width="fill_parent"
+        android:layout_height="51dp"
+        android:layout_above="@+id/btn_back_to_camera"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="6dp"
+        android:layout_marginTop="6dp"
+        android:background="@color/colorPrimary"
+        android:text="@string/send_to_server"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="115dp"
+        tools:layout_editor_absoluteY="387dp" />
+
+    <Button
+        android:id="@+id/btn_back_to_camera"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="6dp"
+        android:layout_marginTop="6dp"
+        android:background="@color/colorPrimary"
+        android:text="@string/go_back"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="147dp"
+        tools:layout_editor_absoluteY="445dp" />
+
+    <TextView
+        android:id="@+id/device_type_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:text="@string/device_type"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/error_below"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/device_type_label"
+        android:text="@string/error_code_below"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/device_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/device_type_label"
+        android:layout_alignBottom="@+id/device_type_label"
+        android:layout_toEndOf="@+id/error_below"
+        android:layout_toRightOf="@+id/error_below"
+        android:text=""
+        android:textSize="18sp" />
+
+
+</RelativeLayout>

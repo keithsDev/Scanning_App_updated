@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#ffffff"
+    tools:context="com.example.kkenneally.testingcrop.MainActivity">
+
+    <ImageView
+        android:id="@+id/imageview"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/btn_retrieve_code"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginTop="4dp"
+        android:background="@color/common_google_signin_btn_text_dark_default"
+        android:clickable="false" />
+
+    <Button
+        android:id="@+id/btn_crop_from_gallery"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/btn_image_from_camera"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_gravity="fill_horizontal"
+        android:layout_marginBottom="4dp"
+        android:layout_marginTop="4dp"
+        android:background="@color/colorPrimary"
+        android:text="@string/error_codes_from_gallery"
+        android:textColor="@color/colorAccent"
+        android:visibility="visible" />
+
+    <Button
+        android:id="@+id/btn_image_from_camera"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="fill_horizontal"
+        android:layout_marginBottom="4dp"
+        android:layout_marginTop="4dp"
+        android:background="@color/colorPrimary"
+        android:text="@string/scan_error_code"
+        android:textColor="@color/colorAccent" />
+
+    <Button
+        android:id="@+id/btn_retrieve_code"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/btn_barcode"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_gravity="fill_horizontal"
+        android:layout_marginBottom="4dp"
+        android:layout_marginTop="4dp"
+        android:background="@color/colorPrimary"
+        android:onClick="onClick"
+        android:text="@string/retrieve_code"
+        android:textColor="@color/colorAccent"
+        android:visibility="invisible" />
+
+    <Button
+        android:id="@+id/btn_barcode"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/btn_crop_from_gallery"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_gravity="fill_horizontal"
+        android:layout_marginBottom="4dp"
+        android:layout_marginTop="4dp"
+        android:background="@color/colorPrimary"
+        android:text="@string/scan_barcode" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/floatingActionButton2_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/imageview"
+        android:layout_alignRight="@+id/imageview"
+        android:layout_marginEnd="3dp"
+        android:layout_marginRight="3dp"
+        android:background="@android:color/holo_blue_dark"
+        android:clickable="true"
+        android:visibility="invisible"
+        app:backgroundTint="@android:color/holo_blue_dark"
+        app:srcCompat="@android:drawable/ic_menu_info_details" />
+
+
+</RelativeLayout>
