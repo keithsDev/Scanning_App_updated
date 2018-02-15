@@ -21,6 +21,22 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfDouble;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.photo.Photo;
+
+
+
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,7 +46,22 @@ import java.nio.channels.FileChannel;
 
 public class MainActivity extends AppCompatActivity {
 
+
     private static final String TAG = MainActivity.class.getSimpleName();
+
+
+
+    static {
+        if (!OpenCVLoader.initDebug()){
+            Log.e(TAG, "Opencv not loaded");
+        }
+        else{
+            Log.e(TAG, "Opencv loaded successfully");
+        }
+    }
+
+
+
 
     ImageView imageView;
     Button buttonCamera, buttonGallery, buttonScan, buttonBarcode ;
@@ -42,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
    // int width, height;
     Bitmap bitmap;
     Bitmap binarizedImage;
+   // Bitmap greyScaleBitmap;
+    Bitmap bitmapPreprocced;
     String deviceType;
     FloatingActionButton floatButtonShowDevice;
 
@@ -113,8 +146,6 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-
-
     }
 
     private void handleBarcode() {
@@ -158,6 +189,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (requestCode == 0 && resultCode == RESULT_OK) {
+           Log.e(TAG, "CODE IS 0");
+
+           // retrievedCodeInitiated();
 
             ImageCropFunction();
            // Toast.makeText(MainActivity.this,"Success", Toast.LENGTH_LONG).show();
@@ -166,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
         else if (requestCode == 2) {
 
             if (data != null) {
+                Log.e(TAG, "CODE IS 2");
 
                 uri = data.getData();
                // Log.e(TAG, "THE LOCATION OF THE IMAGE IS ");
@@ -178,19 +213,20 @@ public class MainActivity extends AppCompatActivity {
         }
         // if taking a new pic is susscessful
         else if (requestCode == 1) {
+            Log.e(TAG, "CODE IS 1");
 
             if (data != null) {
 
                 Bundle bundle = data.getExtras();
 
                 bitmap = bundle.getParcelable("data");
-
+               // greyScaleBitmap= GrayscaleToBin(bitmap);
 
 
                 // --HERE
 
 
-                binarizedImage = convertToMutable(bitmap);
+               /* binarizedImage = convertToMutable(bitmap);
 
 
                 for(int i=0;i<binarizedImage.getWidth();i++) {
@@ -201,12 +237,25 @@ public class MainActivity extends AppCompatActivity {
                         else
                             binarizedImage.setPixel(i, c, Color.WHITE);
                     }
-                }
+                }*/
 
                 // ---TO HERE
+                bitmapPreprocced = bitmap;
+                bitmapPreprocced = opencvconvertoToGreyScale(bitmap);
+                //bitmapPreprocced = opencvBinarizeImage(bitmap);
+                bitmapPreprocced = Thresholding(bitmapPreprocced);
+//               bitmapPreprocced = morphOps(bitmapPreprocced);
+               bitmapPreprocced = erodeandDialate(bitmapPreprocced);
 
-               // imageView.setImageBitmap(bitmap);
-                imageView.setImageBitmap(binarizedImage);
+
+                //  imageView.setImageBitmap(bitmap);
+
+
+                imageView.setImageBitmap(bitmapPreprocced);
+
+                //imageView.setImageBitmap(binarizedImage);
+             //   imageView.setImageBitmap(greyScaleBitmap);
+
 
 
                 retrievedCodeInitiated();
@@ -214,6 +263,241 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+
+    //-------------------------------------------------------------------
+     // OPENCV PREPROCESSING IMAGE
+    //-------------------------------------------------------------------
+    Bitmap opencvconvertoToGreyScale(Bitmap b){
+
+        Bitmap bit;
+        Mat tmp = new Mat (b.getWidth(), b.getHeight(), CvType.CV_8UC1);
+        Utils.bitmapToMat(b, tmp);
+        Imgproc.cvtColor(tmp, tmp, Imgproc.COLOR_RGB2GRAY);
+
+        Utils.matToBitmap(tmp, b);
+        bit = b;
+        return bit;
+
+    }
+
+    /*Bitmap opencvBinarizeImage(Bitmap b){
+
+        Bitmap bit;
+        Mat imageMat = new Mat();
+
+        Utils.bitmapToMat(b, imageMat);
+        Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_BGR2GRAY);
+       // Imgproc.GaussianBlur(imageMat, imageMat, new Size(3, 3), 0);
+      //  Imgproc.adaptiveThreshold(imageMat, imageMat, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 5, 4);
+
+      //  Imgproc.medianBlur(imageMat, imageMat, 3);
+        //Imgproc.threshold(imageMat, imageMat, 0, 255, Imgproc.THRESH_OTSU);
+
+        bit = b;
+        return bit;
+
+    }*/
+
+    public Bitmap Thresholding(Bitmap bitmap)
+    {
+        Mat imgMat = new Mat();
+        Utils.bitmapToMat(bitmap, imgMat);
+        imgMat.convertTo(imgMat, CvType.CV_32FC1, 1.0 / 255.0);
+
+        Mat res = CalcBlockMeanVariance(imgMat, 21);
+        Core.subtract(new MatOfDouble(1.0), res, res);
+        Imgproc.cvtColor( imgMat, imgMat, Imgproc.COLOR_BGRA2BGR);
+        Core.add(imgMat, res, res);
+
+//        Imgproc.threshold(res, res, 0.85, 1, Imgproc.THRESH_BINARY);
+       // Imgproc.threshold(res, res, 0.94, 1, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(res, res, 0.93, 1, Imgproc.THRESH_BINARY);
+
+
+
+        res.convertTo(res, CvType.CV_8UC1, 255.0);
+        Utils.matToBitmap(res, bitmap);
+
+
+        return bitmap;
+    }
+
+    public Mat CalcBlockMeanVariance (Mat Img, int blockSide)
+    {
+        Mat I = new Mat();
+        Mat ResMat;
+        Mat inpaintmask = new Mat();
+        Mat patch;
+        Mat smallImg = new Mat();
+        MatOfDouble mean = new MatOfDouble();
+        MatOfDouble stddev = new MatOfDouble();
+
+        Img.convertTo(I, CvType.CV_32FC1);
+        ResMat = Mat.zeros(Img.rows() / blockSide, Img.cols() / blockSide, CvType.CV_32FC1);
+
+        for (int i = 0; i < Img.rows() - blockSide; i += blockSide)
+        {
+            for (int j = 0; j < Img.cols() - blockSide; j += blockSide)
+            {
+              //  patch = new Mat(I,new Rect(j,i, blockSide, blockSide));
+                patch = new Mat(I, new org.opencv.core.Rect(j,i,blockSide,blockSide));
+                Core.meanStdDev(patch, mean, stddev);
+
+                if (stddev.get(0,0)[0] > 0.01)
+                    ResMat.put(i / blockSide, j / blockSide, mean.get(0,0)[0]);
+                else
+                    ResMat.put(i / blockSide, j / blockSide, 0);
+            }
+        }
+
+        Imgproc.resize(I, smallImg, ResMat.size());
+        Imgproc.threshold(ResMat, inpaintmask, 0.02, 1.0, Imgproc.THRESH_BINARY);
+
+        Mat inpainted = new Mat();
+        Imgproc.cvtColor(smallImg, smallImg, Imgproc.COLOR_RGBA2BGR);
+        smallImg.convertTo(smallImg, CvType.CV_8UC1, 255.0);
+
+        inpaintmask.convertTo(inpaintmask, CvType.CV_8UC1);
+        Photo.inpaint(smallImg, inpaintmask, inpainted, 5, Photo.INPAINT_TELEA);
+
+        Imgproc.resize(inpainted, ResMat, Img.size());
+        ResMat.convertTo(ResMat, CvType.CV_32FC1, 1.0 / 255.0);
+
+        return ResMat;
+    }
+
+
+    public Bitmap erodeandDialate(Bitmap bitmap){
+
+
+       /* try{
+            System.loadLibrary( Core.NATIVE_LIBRARY_NAME );
+           // Mat source = Highgui.imread("digital_image_processing.jpg",  Highgui.CV_LOAD_IMAGE_COLOR);
+
+            Mat source = new Mat();
+            Utils.bitmapToMat(b, source);
+            Mat destination = new Mat(source.rows(),source.cols(),source.type());
+
+            destination = source;
+
+            int erosion_size = 5;
+            int dilation_size = 5;
+
+            Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new  Size(2*erosion_size + 1, 2*erosion_size+1));
+            Imgproc.erode(source, destination, element);
+            Imgcodecs.imread(b);
+            Highgui.imwrite("erosion.jpg", destination);
+
+            source = Highgui.imread("digital_image_processing.jpg",  Highgui.CV_LOAD_IMAGE_COLOR);
+
+            destination = source;
+
+            Mat element1 = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new  Size(2*dilation_size + 1, 2*dilation_size+1));
+            Imgproc.dilate(source, destination, element1);
+            Highgui.imwrite("dilation.jpg", destination);
+
+        }catch (Exception e) {
+            System.out.println("error: " + e.getMessage());
+        }*/
+
+
+
+       /* Imgproc.erode(b, b, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2)));
+        Imgproc.dilate(mInput, mInput, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2, 2)));*/
+
+       // Mat kernel = Imgproc.getStructuringElement(Imgproc.RECT, new Size(3,3));
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_CROSS, new Size(6,6));
+
+        Bitmap bmap;
+        Mat imgMat = new Mat();
+        Utils.bitmapToMat(bitmap, imgMat);
+       // imgMat.convertTo(imgMat, CvType.CV_32FC1, 1.0 / 255.0);
+
+       // Mat res = CalcBlockMeanVariance(imgMat, 21);
+
+
+        //Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_CLOSE, new Size(2,2));
+        //Imgproc.dilate(imgMat, imgMat, dilateElement);
+
+        Imgproc.erode(imgMat, imgMat, kernel);
+        Imgproc.dilate(imgMat, imgMat, kernel);
+      //  Imgproc.morphologyEx(imgMat, imgMat, Imgproc.MORPH_CLOSE, kernel);
+
+
+        // Imgproc.MORPH_CLOSE(imgMat, imgMat, dilateElement);
+
+       // res.convertTo(res, CvType.CV_8UC1, 255.0);
+        //Utils.matToBitmap(res, bitmap);
+        Utils.matToBitmap(imgMat, bitmap);
+
+        bmap= bitmap;
+        return bmap;
+    }
+    private Bitmap morphOps(Bitmap b){
+       // Mat target;
+
+        Bitmap bmap;
+        //Mat target = new Mat (b.getWidth(), b.getHeight(), CvType.CV_8UC1);
+
+
+        Mat target = new Mat();
+       // Bitmap bitmap = b.copy(Bitmap.Config.ARGB_8888, true);
+      //  Utils.bitmapToMat(b, target);
+       // Utils.bitmapToMat(b, target);
+
+        //Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3,3));
+        //Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(8,8));
+
+       // Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2, 2));
+        //Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2));
+
+
+        Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_CLOSE, new Size(2,2));
+
+
+        // Imgproc.erode(target, target, erodeElement);
+
+        Imgproc.dilate(target, target, dilateElement);
+       // Imgproc.erode(target, target, erodeElement);
+
+
+     //   Mat kernel = new Mat(1, 50, CvType.CV_8UC1, Scalar.all(255));
+
+       // Imgproc.morphologyEx(target, target, Imgproc.MORPH_DILATE, target);
+        Utils.bitmapToMat(b, target);
+
+
+        bmap = b;
+        return bmap;
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //-------------------------------------------------------------------------------
+    // CLOSE OPENCV PREPROCESSING IMAGE
+    //-------------------------------------------------------------------------------
+
+
 
     private void retrievedCodeInitiated() {
 
@@ -293,8 +577,10 @@ public class MainActivity extends AppCompatActivity {
             deviceType = "Unknown";
         }
         Intent intent = new Intent(this, ocrActivity.class);
-       // intent.putExtra("BitmapImage", bitmap);
-        intent.putExtra("BitmapImage", binarizedImage);
+        intent.putExtra("BitmapImage", bitmap);
+       // intent.putExtra("BitmapImage", binarizedImage);
+        // intent.putExtra("BitmapImage", greyScaleBitmap);
+
 
         intent.putExtra("DeviceType", deviceType);
         startActivity(intent);
@@ -445,5 +731,106 @@ public class MainActivity extends AppCompatActivity {
 
         return imgIn;
     }
+
+
+
+
+    // SECOND SOLUTION TO BINARIZE
+   /* public static Bitmap GrayscaleToBin(Bitmap bm2)
+    {
+        Bitmap bm;
+        bm=bm2.copy(Bitmap.Config.RGB_565, true);
+        final   int width = bm.getWidth();
+        final  int height = bm.getHeight();
+
+        int pixel1,pixel2,pixel3,pixel4,A,R;
+        int[]  pixels;
+        pixels = new int[width*height];
+        bm.getPixels(pixels,0,width,0,0,width,height);
+        int size=width*height;
+        int s=width/8;
+        int s2=s>>1;
+        double t=0.15;
+        double it=1.0-t;
+        int []integral= new int[size];
+        int []threshold=new int[size];
+        int i,j,diff,x1,y1,x2,y2,ind1,ind2,ind3;
+        int sum=0;
+        int ind=0;
+        while(ind<size)
+        {
+            sum+=pixels[ind] & 0xFF;
+            integral[ind]=sum;
+            ind+=width;
+        }
+        x1=0;
+        for(i=1;i<width;++i)
+        {
+            sum=0;
+            ind=i;
+            ind3=ind-s2;
+            if(i>s)
+            {
+                x1=i-s;
+            }
+            diff=i-x1;
+            for(j=0;j<height;++j)
+            {
+                sum+=pixels[ind] & 0xFF;
+                integral[ind]=integral[(int)(ind-1)]+sum;
+                ind+=width;
+                if(i<s2)continue;
+                if(j<s2)continue;
+                y1=(j<s ? 0 : j-s);
+                ind1=y1*width;
+                ind2=j*width;
+
+                if (((pixels[ind3]&0xFF)*(diff * (j - y1))) < ((integral[(int)(ind2 + i)] - integral[(int)(ind1 + i)] - integral[(int)(ind2 + x1)] + integral[(int)(ind1 + x1)])*it)) {
+                    threshold[ind3] = 0x00;
+                } else {
+                    threshold[ind3] = 0xFFFFFF;
+                }
+                ind3 += width;
+            }
+        }
+
+        y1 = 0;
+        for( j = 0; j < height; ++j )
+        {
+            i = 0;
+            y2 =height- 1;
+            if( j <height- s2 )
+            {
+                i = width - s2;
+                y2 = j + s2;
+            }
+
+            ind = j * width + i;
+            if( j > s2 ) y1 = j - s2;
+            ind1 = y1 * width;
+            ind2 = y2 * width;
+            diff = y2 - y1;
+            for( ; i < width; ++i, ++ind )
+            {
+
+                x1 = ( i < s2 ? 0 : i - s2);
+                x2 = i + s2;
+
+                // check the border
+                if (x2 >= width) x2 = width - 1;
+
+                if (((pixels[ind]&0xFF)*((x2 - x1) * diff)) < ((integral[(int)(ind2 + x2)] - integral[(int)(ind1 + x2)] - integral[(int)(ind2 + x1)] + integral[(int)(ind1 + x1)])*it)) {
+                    threshold[ind] = 0x00;
+                } else {
+                    threshold[ind] = 0xFFFFFF;
+                }
+            }
+        }
+   *//*-------------------------------
+    * --------------------------------------------*//*
+        bm.setPixels(threshold,0,width,0,0,width,height);
+
+        return bm;
+    }*/
 
 }
