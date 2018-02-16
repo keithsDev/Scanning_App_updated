@@ -28,6 +28,7 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -43,6 +44,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -220,7 +223,9 @@ public class MainActivity extends AppCompatActivity {
                 Bundle bundle = data.getExtras();
 
                 bitmap = bundle.getParcelable("data");
-               // greyScaleBitmap= GrayscaleToBin(bitmap);
+             //   bitmap = bundle.getParcelable("return-data");
+
+                // greyScaleBitmap= GrayscaleToBin(bitmap);
 
 
                 // --HERE
@@ -242,11 +247,13 @@ public class MainActivity extends AppCompatActivity {
                 // ---TO HERE
                 bitmapPreprocced = bitmap;
                 bitmapPreprocced = opencvconvertoToGreyScale(bitmap);
-                //bitmapPreprocced = opencvBinarizeImage(bitmap);
                 bitmapPreprocced = Thresholding(bitmapPreprocced);
-//               bitmapPreprocced = morphOps(bitmapPreprocced);
-               bitmapPreprocced = erodeandDialate(bitmapPreprocced);
+                bitmapPreprocced = removeNoise(bitmapPreprocced);
+                bitmapPreprocced = erodeandDialate(bitmapPreprocced);
 
+                //unused
+                //bitmapPreprocced = opencvBinarizeImage(bitmap);
+//               bitmapPreprocced = morphOps(bitmapPreprocced);
 
                 //  imageView.setImageBitmap(bitmap);
 
@@ -312,7 +319,11 @@ public class MainActivity extends AppCompatActivity {
 
 //        Imgproc.threshold(res, res, 0.85, 1, Imgproc.THRESH_BINARY);
        // Imgproc.threshold(res, res, 0.94, 1, Imgproc.THRESH_BINARY);
-        Imgproc.threshold(res, res, 0.93, 1, Imgproc.THRESH_BINARY);
+//        Imgproc.threshold(res, res, 0.93, 1, Imgproc.THRESH_BINARY);
+        //Imgproc.threshold(res, res, 0.88, 1, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(res, res, 0.90, 1, Imgproc.THRESH_BINARY);
+
+
 
 
 
@@ -371,43 +382,18 @@ public class MainActivity extends AppCompatActivity {
     public Bitmap erodeandDialate(Bitmap bitmap){
 
 
-       /* try{
-            System.loadLibrary( Core.NATIVE_LIBRARY_NAME );
-           // Mat source = Highgui.imread("digital_image_processing.jpg",  Highgui.CV_LOAD_IMAGE_COLOR);
-
-            Mat source = new Mat();
-            Utils.bitmapToMat(b, source);
-            Mat destination = new Mat(source.rows(),source.cols(),source.type());
-
-            destination = source;
-
-            int erosion_size = 5;
-            int dilation_size = 5;
-
-            Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new  Size(2*erosion_size + 1, 2*erosion_size+1));
-            Imgproc.erode(source, destination, element);
-            Imgcodecs.imread(b);
-            Highgui.imwrite("erosion.jpg", destination);
-
-            source = Highgui.imread("digital_image_processing.jpg",  Highgui.CV_LOAD_IMAGE_COLOR);
-
-            destination = source;
-
-            Mat element1 = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new  Size(2*dilation_size + 1, 2*dilation_size+1));
-            Imgproc.dilate(source, destination, element1);
-            Highgui.imwrite("dilation.jpg", destination);
-
-        }catch (Exception e) {
-            System.out.println("error: " + e.getMessage());
-        }*/
-
-
-
        /* Imgproc.erode(b, b, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2)));
         Imgproc.dilate(mInput, mInput, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2, 2)));*/
 
        // Mat kernel = Imgproc.getStructuringElement(Imgproc.RECT, new Size(3,3));
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_CROSS, new Size(6,6));
+       //Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_CROSS, new Size(1,1));
+       // Mat kernelErode = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1.4,2.4));
+       // Mat kernelDialate = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1.4,2.4));
+
+        Mat kernelErode = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1,1.7));
+        Mat kernelDialate = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1,1.7));
+
+
 
         Bitmap bmap;
         Mat imgMat = new Mat();
@@ -420,18 +406,67 @@ public class MainActivity extends AppCompatActivity {
         //Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_CLOSE, new Size(2,2));
         //Imgproc.dilate(imgMat, imgMat, dilateElement);
 
-        Imgproc.erode(imgMat, imgMat, kernel);
-        Imgproc.dilate(imgMat, imgMat, kernel);
-      //  Imgproc.morphologyEx(imgMat, imgMat, Imgproc.MORPH_CLOSE, kernel);
+        Imgproc.dilate(imgMat, imgMat, kernelDialate);
+        Imgproc.erode(imgMat, imgMat, kernelErode);
+       // Imgproc.dilate(imgMat, imgMat, kernelDialate);
 
+
+        // Imgproc.morphologyEx(imgMat, imgMat, Imgproc.MORPH_CLOSE, kernelErode);
+        Imgproc.morphologyEx(imgMat, imgMat, Imgproc.MORPH_CLOSE, kernelDialate);
 
         // Imgproc.MORPH_CLOSE(imgMat, imgMat, dilateElement);
 
        // res.convertTo(res, CvType.CV_8UC1, 255.0);
         //Utils.matToBitmap(res, bitmap);
+
+
+
+       // Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_BGR2GRAY);
+       //  Imgproc.GaussianBlur(imgMat, imgMat, new Size(3, 3), 0);
+        //  Imgproc.adaptiveThreshold(imgMat, imgMat, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 5, 4);
+
+         // Imgproc.medianBlur(imgMat, imgMat, 3);
+       // Imgproc.threshold(imgMat, imgMat, 0, 255, Imgproc.THRESH_OTSU);
+
+
+
+
+
+
+
+
+
+        /*List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+        Mat hierarchy = new Mat();
+        Imgproc.findContours(img, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE);
+        for (int i = 0; i < contours.size(); i++) {
+            //...contour code here...
+        }*/
+
         Utils.matToBitmap(imgMat, bitmap);
 
         bmap= bitmap;
+        return bmap;
+    }
+
+    // RemoveNoise
+    private Bitmap removeNoise(Bitmap bmap) {
+        for (int x = 0; x < bmap.getWidth(); x++) {
+            for (int y = 0; y < bmap.getHeight(); y++) {
+                int pixel = bmap.getPixel(x, y);
+                if (Color.red(pixel) < 162 && Color.green(pixel) < 162 && Color.blue(pixel) < 162) {
+                    bmap.setPixel(x, y, Color.BLACK);
+                }
+            }
+        }
+        for (int x = 0; x < bmap.getWidth(); x++) {
+            for (int y = 0; y < bmap.getHeight(); y++) {
+                int pixel = bmap.getPixel(x, y);
+                if (Color.red(pixel) > 162 && Color.green(pixel) > 162 && Color.blue(pixel) > 162) {
+                    bmap.setPixel(x, y, Color.WHITE);
+                }
+            }
+        }
         return bmap;
     }
     private Bitmap morphOps(Bitmap b){
@@ -513,11 +548,30 @@ public class MainActivity extends AppCompatActivity {
 
             CropIntent.setDataAndType(uri, "image/*");
 
-            CropIntent.putExtra("crop", "true");
+            /*CropIntent.putExtra("crop", "true");
             CropIntent.putExtra("outputX", 180);
             CropIntent.putExtra("outputY", 180);
             CropIntent.putExtra("aspectX", 3);
             CropIntent.putExtra("aspectY", 4);
+            CropIntent.putExtra("scaleUpIfNeeded", true);
+            CropIntent.putExtra("return-data", true);*/
+
+
+            // CROP A RECTANGLE IMAGE
+            /*CropIntent.putExtra("crop", "true");
+            CropIntent.putExtra("outputX", 228);
+            CropIntent.putExtra("outputY", 228);
+            CropIntent.putExtra("aspectX", 2.6);
+            CropIntent.putExtra("aspectY", 1);
+            CropIntent.putExtra("scaleUpIfNeeded", true);
+            CropIntent.putExtra("return-data", true);*/
+
+
+            CropIntent.putExtra("crop", "true");
+            CropIntent.putExtra("outputX", 200);
+            CropIntent.putExtra("outputY", 150);
+            CropIntent.putExtra("aspectX", 0);
+            CropIntent.putExtra("aspectY", 0);
             CropIntent.putExtra("scaleUpIfNeeded", true);
             CropIntent.putExtra("return-data", true);
 
@@ -525,6 +579,9 @@ public class MainActivity extends AppCompatActivity {
 
         } catch (ActivityNotFoundException e) {
 
+            String errorMessage = "Your device doesn't support this crop action!";
+            Toast toast = Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT);
+            toast.show();
         }
     }
 

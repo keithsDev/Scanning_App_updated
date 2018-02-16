@@ -15,6 +15,8 @@ import android.widget.Toast;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
 
+import java.io.File;
+
 
 public class ocrActivity extends AppCompatActivity implements  View.OnClickListener{
 
@@ -126,8 +128,16 @@ public class ocrActivity extends AppCompatActivity implements  View.OnClickListe
 
         try{
             tessBaseAPI = new TessBaseAPI();
+            tessBaseAPI.setDebug(false);
+            // whitelist only the characters we need
+            //tessBaseAPI.setPageSegMode(TessBaseAPI.PageSegMode.PSM_OSD_ONLY);
+            tessBaseAPI.setVariable(TessBaseAPI.VAR_CHAR_WHITELIST,"0123456789");
+          //  tessBaseAPI.setVariable(TessBaseAPI.VAR_CHAR_BLACKLIST,"GHIJKLMNOPQRSTUVWXYZabcdefghijklmopqrstuvwxyz>?!/;:)(");
 
-            tessBaseAPI.init(DATA_PATH, "eng");
+            tessBaseAPI.init(DATA_PATH+ File.separator,"eng");
+
+
+           // tessBaseAPI.init(DATA_PATH, "eng");
            // tessBaseAPI.init(DATA_PATH, "digital");
 
             Log.e(TAG, "THE LOCATION OF THE ENG FILE IS ");
@@ -184,7 +194,9 @@ public class ocrActivity extends AppCompatActivity implements  View.OnClickListe
 
         new Thread(new Runnable() {
             public void run() {
+
                 final String srcText = getOCRResult(bitmap);
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
